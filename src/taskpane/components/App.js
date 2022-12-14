@@ -8,7 +8,6 @@ import Header from "./Header";
 import Progress from "./Progress";
 import Button from "./Button"
 import { PrimaryButton } from "@fluentui/react";
-import { Spinner, SpinnerSize } from "@fluentui/react";
 
 
 /* global console, Excel, require */
@@ -73,27 +72,6 @@ export default class App extends React.Component {
     });
   };
 
-  // click = async () => {
-  //   try {
-  //     await Excel.run(async (context) => {
-  //       /**
-  //        * Insert your Excel code here
-  //        */
-  //       const range = context.workbook.getSelectedRange();
-
-  //       // Read the range address
-  //       range.load("address");
-
-  //       // Update the fill color
-  //       range.format.fill.color = "yellow";
-
-  //       await context.sync();
-  //       console.log(`The range address was ${range.address}.`);
-  //     });
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
 
   handleInput1 = async () => {
     try {
@@ -115,7 +93,7 @@ export default class App extends React.Component {
         activeCell.load("columnIndex");
         activeCell.load("rowIndex");
         // Update the fill color
-        usedrange.format.fill.color = "yellow";
+        // usedrange.format.fill.color = "yellow";
 
         await context.sync();
         console.log(`The range address was ${range.address}.t`);
@@ -145,7 +123,7 @@ export default class App extends React.Component {
         activeCell.load("columnIndex");
         activeCell.load("rowIndex");
         // Update the fill color
-        usedrange.format.fill.color = "yellow";
+        // usedrange.format.fill.color = "yellow";
 
         await context.sync();
         console.log(`The range address was ${range.address}.t`);
@@ -172,18 +150,20 @@ combineemails = async () => {
       let i2range = sheet2firstcell.getEntireColumn();
       let s1range = i1range.getUsedRange(false);
       let s2range = i2range.getUsedRange(false);
+      let s1lastcell = s1range.getLastCell();
+      s1lastcell.load("rowIndex");
       s1range.load("address");
       s2range.load("address");
-      s1range.load("rowIndex");
       s1range.load("rowCount");
+      s1range.load("rowIndex")
       s1range.load("values");
       s2range.load("values");
       let sheet1rows = sheet1.getRange();
       sheet1rows.load("address");
       await context.sync();
-      let s1rowcount = s1range.rowCount;
-      console.log((sheet1rows.address));
-      console.log((s1rowcount));
+      console.log("the range is " + s1range.address);
+      console.log("the 2nd range is " + s2range.address);
+      let s1rowcount = s1lastcell.rowIndex;
 
       function compare(a, b) {
         // Use toUpperCase() to ignore character casing
@@ -192,7 +172,7 @@ combineemails = async () => {
       
        if (bandA == bandB){
         return true;
-       }else{
+       } else{
         return false;
 
        }
@@ -200,16 +180,26 @@ combineemails = async () => {
 
       for(let i=0; i < s1range.values.length; i++){
         if (s2range.values[i][0] == ""){
+          if (s1range.values[i][0] != ""){
+            uniquecount = uniquecount + 1;
+          }
           continue;
+        } else if (s1range.values[i][0] == ""){
+          s1range.getCell(i, 0).values = [s2range.values[i]];
+          s2range.getCell(i, 0).values = [["Copied to Left"]];
+          uniquecount = uniquecount + 1;
         }
         else if(compare(s1range.values[i][0], s2range.values[i][0])){
-          console.log("if #2");
           s2range.getCell(i, 0).values = [["Duplicate"]];
           uniquecount = uniquecount + 1;
         }
         else {
+          s1rowcount = s1rowcount + 1;
           let newrow = sheet1rows.getCell(s1rowcount, 0)
-          newrow.copyFrom(sheet1rows.getRow(i));
+          let cell_row = s1range.getCell(i, 0);
+          cell_row.load("rowIndex");
+          await context.sync();
+          newrow.copyFrom(sheet1rows.getRow(cell_row.rowIndex));
           let new_cell = sheet1.getCell(s1rowcount, this.state.EE1CI);
           let copied_cell = sheet1.getCell(s1rowcount, this.state.EE2CI);
           copied_cell.load("values");
@@ -218,12 +208,11 @@ combineemails = async () => {
           new_cell.values = copied_cell.values;
           copied_cell.values = [["New Email"]]
           s2range.getCell(i, 0).values = [["Copied To New Row"]];
-          s1rowcount = s1rowcount + 1;
-          uniquecount = uniquecount + 1;
+          uniquecount = uniquecount + 2;
         }
       }
       await context.sync();
-      this.setState({somethingelse: "Task Completed", newemails: (s1rowcount - s1range.rowCount - 1), uniqueemails: uniquecount})
+      this.setState({somethingelse: "Task Completed", newemails: ((s1rowcount - s1lastcell.rowIndex)), uniqueemails: uniquecount})
     });
     }catch (error){
       console.error(error);
@@ -301,14 +290,14 @@ sheetclick = (sheet) => {
           <p style={pstyle} className="ms-font-l"> Your solution for collating all sheets into one.
           </p>
         ) : 
-        <>
+        <div style={divstyle}>
         <p style={pstyle2} className="ms-font-l"> 
-        This program combines all the sheets in this Workbook into one. Please select one row which has a common name
+        This program combines all the sheets in this workbook into one. Please select one row which has a common name
         between all the sheets. The column name must be in Row 1 of the sheet. The program compares the column values between sheets.
         If they match, then the program adds additional columns to that row. If it is a unique value, the program will add an additional
         row to the new collated sheet.
           </p>
-        </>
+        </div>
         }
         {/* </HeroList> */}
         </div>

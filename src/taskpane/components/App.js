@@ -8,6 +8,9 @@ import Header from "./Header";
 import Progress from "./Progress";
 import Button from "./Button"
 import { PrimaryButton } from "@fluentui/react";
+import { Spinner, SpinnerSize } from "@fluentui/react";
+import { collatesheets } from "./sheetlogic";
+
 
 
 /* global console, Excel, require */
@@ -25,6 +28,7 @@ const pstyle2 = {
 }
 const divstyle = {
   marginLeft: '8px',
+  paddingBottom: '10px',
 }
 const inputstyle = {
   width: '90%',
@@ -42,13 +46,15 @@ export default class App extends React.Component {
     super(props, context);
     this.state = {
       listItems: [],
-      emailbool: false,
+      emailbool: true,
       somethingelse: "",
-      sheetbool:false,
-      EE1A: "Select a Column",
+      sheetbool:true,
+      EE1A: "Select a Column",  
       EE2A: "Select a Column",
       emailclick: null,
       emailcomplete: false,
+      columntitle: [],
+      sheetload: "",
     };
   }
 
@@ -69,6 +75,7 @@ export default class App extends React.Component {
           primaryText: "Create and visualize like a pro",
         },
       ],
+      columntitle: [{sheet: "", row: 0, column: 0, value: "Please Select a Column Name"}]
     });
   };
 
@@ -100,7 +107,12 @@ export default class App extends React.Component {
         this.setState({EE1A: usedrange.address, EE1CI: activeCell.columnIndex, EE1RI: activeCell.rowIndex, EE1SN: sheet.name});
       });
     } catch (error) {
+      if (error.debugInfo.code = "ItemNotFound") {
+        this.setState({EE1A: "Please Select a Column with Data!"});
+      }
       console.error(error);
+      
+
     }
   }
   handleInput2 = async () => {
@@ -130,14 +142,24 @@ export default class App extends React.Component {
         this.setState({EE2A: usedrange.address, EE2CI: activeCell.columnIndex, EE2RI: activeCell.rowIndex, EE2SN: sheet.name});
       });
     } catch (error) {
+      if (error.debugInfo.code = "ItemNotFound") {
+        this.setState({EE2A: "Please Select a Column with Data!"});
+      }
       console.error(error);
     }
   }
 
 combineemails = async () => {
-  this.setState({somethingelse: "The automation is running...please wait. If the sheet is large, this may take a few minutes."})
+  if (this.state.EE1A == this.state.EE2A){
+    this.setState({somethingelse: "Please select two unique columns and try again."})
+    return
+  }
+  if (this.state.emailcomplete){
+    this.setState({emailcomplete: false});
+  }
+  this.setState({somethingelse: "The automation is running."})
   try {
-    await Excel.run(async (context) => {
+     Excel.run(async (context) => {
       console.log("the function ran")
       //Need to get the range with the last used cell in Excel -> then operate over these
       //cells 
@@ -213,11 +235,12 @@ combineemails = async () => {
       }
       await context.sync();
       this.setState({somethingelse: "Task Completed", newemails: ((s1rowcount - s1lastcell.rowIndex)), uniqueemails: uniquecount})
+    }).then((res) => {
+      this.setState({emailcomplete: true});
     });
     }catch (error){
       console.error(error);
     }
-    this.setState({emailcomplete: true})
 }
 
 emailclick = () => {
@@ -228,6 +251,42 @@ emailclick = () => {
 sheetclick = (sheet) => {
   sheet = !sheet;
   this.setState({sheetbool: sheet})
+}
+
+handlesheetInput = async () => {
+  try {
+    await Excel.run(async (context) => {
+      /**
+       * Insert your Excel code here
+       */
+      const sheet = context.workbook.worksheets.getActiveWorksheet();
+      sheet.load("name");
+      let activeCell = context.workbook.getActiveCell();
+
+      // Read the range address
+      activeCell.load("values")
+      activeCell.load("address"); 
+      activeCell.load("rowIndex");
+      activeCell.load("columnIndex");
+      // Update the fill color
+      // usedrange.format.fill.color = "yellow";
+      await context.sync();
+      console.log(`The range address was ${activeCell.address}`);
+      console.log(`The value was ${activeCell.values[0][0]}`);
+      this.setState({columntitle: [{sheet: sheet.name, row: activeCell.rowIndex, column: activeCell.columnIndex, value: activeCell.values[0][0]}]});
+    });
+  } catch (error) {
+    if (error.debugInfo.code = "ItemNotFound") {
+      this.setState({EE2A: "Please Select a Column with Data!"});
+    }
+    console.error(error);
+  }
+}
+csheetclick = () => {
+  this.setState({sheetload: "Please wait the sheets are being collated."})
+  collatesheets(columntitle[0].sheet, columntitle[0].column, columntitle[0].row).then((res) =>
+  this.setState({sheetload: "The collating is complete!"})
+  )
 }
 
   render() {
@@ -246,9 +305,7 @@ sheetclick = (sheet) => {
     return (
       <div className="ms-welcome">
         <Header
-          logo={require("./../../../assets/SPM_Old-Logo_2017.png")}
-          title={this.props.title}
-          message="Welcome to the Storefront Excel App"
+          message="Welcome to the Email & Sheet Automation App"
         />
         {/* <HeroList message="Discover what Office Add-ins can do for you today!" items={this.state.listItems}> */}
         <div style={innercontent}>
@@ -268,18 +325,18 @@ sheetclick = (sheet) => {
           </p>
           <div>
           <p style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '0px', paddingBottom: '0px'}}>Email Column 1</p>
-          <p>Please select the first column with your cursor, then select the box below.</p>
-          <input onClick={this.handleInput1} style={inputstyle} value={this.state.EE1A}></input>
+          <p>Please select the first column with your cursor <strong> first</strong>, then select the box below.</p>
+          <input onClick={this.handleInput1} className={this.state.EE1A == "Please Select a Column with Data!" ? "Iteminputred" : "Iteminput"} style={inputstyle} value={this.state.EE1A}></input>
           </div>
           <p style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '0px', paddingBottom: '0px'}}>Email Column 2</p>
           <p>Please select the second column with your cursor, then select the box below.</p>
-          <input onClick={this.handleInput2} style={inputstyle} value={this.state.EE2A}></input>
+          <input onClick={this.handleInput2} className={this.state.EE2A == "Please Select a Column with Data!" ? "Iteminputred" : "Iteminput"} value={this.state.EE2A}></input>
           <PrimaryButton style={{marginTop: '10px'}} onClick={this.combineemails}>
             Combine Emails
           </PrimaryButton>
           {this.state.emailcomplete ? <p className="ms-font-1">Task Completed! You added {this.state.newemails} new emails.
             There are about {this.state.uniqueemails} unique emails in this sheet.</p> : 
-          <p style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '0px', paddingBottom: '0px'}}>{this.state.somethingelse} </p>}
+          <p style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '0px', paddingBottom: '0px'}}> {this.state.somethingelse == "The automation is running." ? <Spinner size={SpinnerSize.small} label={"The automation is running...please wait. If the sheet is large, this may take a few minutes."} /> : null} </p>}
           </div>
           </>
         )}
@@ -297,7 +354,24 @@ sheetclick = (sheet) => {
         If they match, then the program adds additional columns to that row. If it is a unique value, the program will add an additional
         row to the new collated sheet.
           </p>
+          <div style={{paddingBottom: '10px'}}>
+          <p style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '0px', paddingBottom: '0px'}}>Common Column</p>
+          <p>Please select the name of the column which is common among all sheets.</p>
+          <input onClick={this.handlesheetInput} className="Iteminput" value={this.state.columntitle[0].value}></input>
+          </div>
+          {this.state.columntitle[0].value != "Please Select a Column Name" ? 
+          (<div>
+          <p>You selected the {this.state.columntitle[0].value} column. All sheets <strong>must</strong> have this
+          column title in order to be compared and combined. Press below to collate the sheets.</p>
+          <PrimaryButton style={{marginTop: '5px'}} onClick={this.csheetclick}>
+            Collate Sheets </PrimaryButton>
+          </div>
+          ) : null}
+          {this.state.sheetload == "The collating is complete!" ? <p className="ms-font-1">Task Completed! The collating is finished.</p> : 
+          <p style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '0px', paddingBottom: '0px'}}> {this.state.sheetload == "Please wait the sheets are being collated." ? <Spinner size={SpinnerSize.small} label={"The automation is running...please wait. If there are numerous sheets, this may take a few minutes."} /> : null} </p>}
+          
         </div>
+        
         }
         {/* </HeroList> */}
         </div>

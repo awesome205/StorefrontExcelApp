@@ -31,14 +31,26 @@
  }
  .ms-welcome__header {
     width: 100%!important;
-    padding-bottom: 25px;
-    padding-top: 30px;
+    padding-bottom: 40px;
+    padding-top: 40px;
     display: -webkit-flex;
     display: flex;
     -webkit-flex-direction: column;
     flex-direction: column;
     align-items: center;
  }
+
+.Iteminput {
+    width: 90%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+.Iteminputred {
+    width: 90%;
+    padding: 15px;
+    box-sizing: border-box;
+    color: #cc0000;
+}
 
  .ms-welcome__main {
     display: -webkit-flex;

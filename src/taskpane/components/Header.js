@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 const h2style = {
   textAlign: 'center',
   margin: '10px',
+  fontSize: '3em',
 }
 
 export default class Header extends React.Component {
@@ -12,7 +13,7 @@ export default class Header extends React.Component {
 
     return (
       <section className="ms-welcome__header ms-bgColor-neutralLighter ms-u-fadeIn500">
-        <img width="200" height="90" src={logo} alt={title} title={title} />
+        {/* <img width="200" height="90" src={logo} alt={title} title={title} /> */}
         <h2 style={h2style} className="ms-fontSize-su ms-fontWeight-light ms-fontColor-neutralPrimary">{message}</h2>
       </section>
     );

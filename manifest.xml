@@ -4,13 +4,13 @@
   <Version>1.0.0.0</Version>
   <ProviderName>Contoso</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="StorefrontExcelApp"/>
+  <DisplayName DefaultValue="Email and Sheet Automation"/>
   <Description DefaultValue="A template to get started."/>
   <IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-64.png"/>
-  <SupportUrl DefaultValue="https://storefrontpolitical.com/"/>
+  <SupportUrl DefaultValue="https://cascadeup.tech"/>
   <AppDomains>
-    <AppDomain>https://storefrontpolitical.com/</AppDomain>
+    <AppDomain>https://cascadeup.tech</AppDomain>
   </AppDomains>
   <Hosts>
     <Host Name="Workbook"/>
@@ -72,12 +72,12 @@
         <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="GetStarted.Title" DefaultValue="Get started with the Storefront add-in!"/>
+        <bt:String id="GetStarted.Title" DefaultValue="Get started with the Email and Sheet Automation add-in!"/>
         <bt:String id="CommandsGroup.Label" DefaultValue="Commands Group"/>
-        <bt:String id="TaskpaneButton.Label" DefaultValue="Storefront Excel"/>
+        <bt:String id="TaskpaneButton.Label" DefaultValue="Email and Sheet Automation"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="GetStarted.Description" DefaultValue="Hey Storefront! Hope you like your add-in :)"/>
+        <bt:String id="GetStarted.Description" DefaultValue="Hey! Hope you like your add-in :)"/>
         <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Click to Show a Taskpane"/>
       </bt:LongStrings>
     </Resources>

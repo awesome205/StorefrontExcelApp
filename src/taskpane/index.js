@@ -9,7 +9,7 @@ initializeIcons();
 
 let isOfficeInitialized = false;
 
-const title = "Storefront Excel Add-In";
+const title = "Email & Sheet Automation";
 
 const render = (Component) => {
   ReactDOM.render(

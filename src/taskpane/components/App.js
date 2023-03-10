@@ -41,6 +41,7 @@ const innercontent = {
 }
 
 
+
 export default class App extends React.Component {
   constructor(props, context) {
     super(props, context);
@@ -79,7 +80,43 @@ export default class App extends React.Component {
     });
   };
 
+  handleInput3 = async () => {
+    try {
+      await Excel.run(async (context) => {
+        /**
+         * Insert your Excel code here
+         */
+        const sheet = context.workbook.worksheets.getActiveWorksheet();
+        sheet.load("name");
+        const range = context.workbook.getSelectedRange();
+        let activeCell = context.workbook.getActiveCell();
+      
+        let entireRange = activeCell.getEntireColumn();
+        const usedrange = entireRange.getUsedRange(false);
 
+        // Read the range address
+        usedrange.load("address");
+        range.load("address");
+        activeCell.load("columnIndex");
+        activeCell.load("rowIndex");
+        usedrange.load("values");
+        // Update the fill color
+        // usedrange.format.fill.color = "yellow";
+
+        await context.sync();
+        console.log(usedrange.values);
+        console.log(`The range address was ${range.address}.t`);
+        this.setState({EE1A: usedrange.address, EE1CI: activeCell.columnIndex, EE1RI: activeCell.rowIndex, EE1SN: sheet.name});
+      });
+    } catch (error) {
+      if (error.debugInfo.code = "ItemNotFound") {
+        this.setState({EE1A: "Please Select a Column with Data!"});
+      }
+      console.error(error);
+      
+
+    }
+  }
   handleInput1 = async () => {
     try {
       await Excel.run(async (context) => {
@@ -99,10 +136,12 @@ export default class App extends React.Component {
         range.load("address");
         activeCell.load("columnIndex");
         activeCell.load("rowIndex");
+        usedrange.load("values");
         // Update the fill color
         // usedrange.format.fill.color = "yellow";
 
         await context.sync();
+        console.log(usedrange.values);
         console.log(`The range address was ${range.address}.t`);
         this.setState({EE1A: usedrange.address, EE1CI: activeCell.columnIndex, EE1RI: activeCell.rowIndex, EE1SN: sheet.name});
       });
@@ -268,11 +307,11 @@ handlesheetInput = async () => {
       activeCell.load("address"); 
       activeCell.load("rowIndex");
       activeCell.load("columnIndex");
-      // Update the fill color
-      // usedrange.format.fill.color = "yellow";
+    
       await context.sync();
-      console.log(`The range address was ${activeCell.address}`);
-      console.log(`The value was ${activeCell.values[0][0]}`);
+  
+      console.log(`Worksheet name: ${sheet.name}`);
+  
       this.setState({columntitle: [{sheet: sheet.name, row: activeCell.rowIndex, column: activeCell.columnIndex, value: activeCell.values[0][0]}]});
     });
   } catch (error) {
@@ -282,12 +321,190 @@ handlesheetInput = async () => {
     console.error(error);
   }
 }
+finishsheet = () => {
+  this.setState({sheetload: "The collating is complete!"});
+}
 csheetclick = () => {
   this.setState({sheetload: "Please wait the sheets are being collated."})
-  collatesheets(columntitle[0].sheet, columntitle[0].column, columntitle[0].row).then((res) =>
-  this.setState({sheetload: "The collating is complete!"})
-  )
+  // collatesheets(this.state.columntitle[0].sheet, this.state.columntitle[0].column, this.state.columntitle[0].row, this.finishsheet);
+  let osheetname = this.state.columntitle[0].sheet;
+  let ocellcolumn = this.state.columntitle[0].column;
+  let ocellrow = this.state.columntitle[0].row;
+
+  try {
+    Excel.run(async (context) => {
+      /**
+       * Insert your Excel code here
+       */
+      const sheet1 = context.workbook.worksheets.getItem(osheetname);
+      const sheet1trange = sheet1.getRange("1:10000").getUsedRange(false);
+      let temprange = sheet1.getCell(ocellrow, ocellcolumn)
+      let fullrange = temprange.getEntireColumn();
+      const sheet1erange = fullrange.getUsedRange(false);
+      sheet1erange.load("values");
+      sheet1erange.load("rowCount");
+      sheet1trange.load("values");
+      sheet1trange.load("columnCount");
+      await context.sync(); 
+      let sheet1titles = sheet1trange.values[0];
+      let sheet1maintitle = sheet1erange.values[0][0].toLowerCase().trim();
+      let sheet1rowcount = sheet1erange.rowCount;
+      let sheet1columncount = sheet1trange.columnCount;
+      let titlemap = new Map();
+      let emailmap = new Map();
+      let localtitlemap = new Map();
+      titlemap.clear();
+      emailmap.clear();
+      localtitlemap.clear();
+      /* declare hash table */
+      let name1 = sheet1titles[0];
+      for(let i = 0; i < sheet1titles.length; i++){
+        name1 = sheet1titles[i].toLowerCase().trim();
+        /* put the values in a hash table with the titles as the key and the
+        column index as the value */
+        titlemap.set(name1, i);
+      }
+      console.log("first for loop + column count " + sheet1trange.columnCount);
+      let email1 = sheet1erange.values[0][0];
+      for(let krib = 1; krib < sheet1erange.values.length; krib++){
+            email1 = sheet1erange.values[krib][0];
+            console.log(email1);
+            emailmap.set(email1, krib);
+        }
+    console.log("second for loop + map " + email1);
+    const count = context.workbook.worksheets.getCount()
+    let sheet2 = context.workbook.worksheets.getFirst();
+    await context.sync();
+
+      for (let i = 0; i < count.value-1; i++){
+        sheet2.load("name");
+        await context.sync();
+        if(sheet2.name == osheetname){
+            sheet2 = sheet2.getNextOrNullObject();
+            sheet2.load("name");
+            await context.sync();
+        }
+        // Implement check for null value at the end of the function -> if it goes to the next sheet and it is null then end the function
+        console.log(count);
+        console.log("Worksheet " + i + sheet2.name);
+        const sheet2trange = sheet2.getRange("1:10000").getUsedRange(false);
+        sheet2trange.load("values");
+        sheet2trange.load("columnCount");
+        await context.sync();
+        let sheet2columncount = sheet2trange.columnCount;
+        let sheet2titles = sheet2trange.values[0];
+        let emailColumn = 0;
+        let newtitles = [];
+        console.log("sheet 1 row count " + sheet1rowcount);
+        
+        for (let z = 0; z < sheet2titles.length; z++) {
+            let name2 = sheet2titles[z].toLowerCase().trim();
+            sheet1trange.load("columnCount");
+            await context.sync();
+            localtitlemap.set(name2, z);
+            // localtitlemap.set(z, name2);
+            if (titlemap.has(name2)){
+                if(name2 == sheet1maintitle){ // change this to the value that's being passed in.
+                    emailColumn = z; // recorded so you know which one to compare to when you need to copy the values over
+                }
+            } else /* name not in hash table */ {
+                titlemap.set(name2, sheet1columncount);
+                /* put name2 in the hash table with an index of sheet1trange.columnCount */
+                let new_cell = sheet1.getCell(0, sheet1columncount);
+                new_cell.load("values");
+                await context.sync();
+                new_cell.values = [[sheet2titles[z]]];
+                newtitles.push(name2); /* Check this syntax */
+                sheet1columncount += 1;
+            }
+        }
+        console.log(newtitles);
+        console.log("Email column is " + emailColumn);
+        let temprange2 = sheet2.getCell(0, emailColumn);
+        let fullrange2 = temprange2.getEntireColumn();
+        const sheet2erange = fullrange2.getUsedRange(false);
+        sheet2erange.load("values");
+        // let temprange3 = sheet2.getCell(10, 0);
+        // let temp4 = temprange3.getEntireRow();
+        // temp4.load("address");
+        // temp4.load("values");
+        await context.sync(); 
+        let testrow = sheet1.getRangeByIndexes(sheet1rowcount, 0, 1, (sheet1columncount));
+        testrow.load("values");
+        testrow.load("address");
+        await context.sync();
+        console.log("TEST ROW");
+        console.log(testrow.address);
+        console.log(testrow.values);
+
+        for(let ced = 1; ced < sheet2erange.values.length; ced++){
+            let email2 = sheet2erange.values[ced][0].toLowerCase().trim();
+            if(emailmap.has(email2)){
+                console.log("GOES INSIDE FIRST IF STATEMENT 107");
+                for(let xo = 0; xo < newtitles.length; xo++){
+                  let newemailinfo = sheet2.getCell(ced, localtitlemap.get(newtitles[xo]));
+                  let oldemailinfo = sheet1.getCell(emailmap.get(email2), titlemap.get(newtitles[xo]));
+                  oldemailinfo.load("values");
+                  newemailinfo.load("values");
+                  await context.sync();
+                  oldemailinfo = newemailinfo;
+                }
+                await context.sync();
+            } else {
+                console.log("other implementation 2");
+                for (let [key, value] of localtitlemap){
+                    let copycell = sheet2.getCell(ced, value);
+                    let destinationcell = sheet1.getCell(sheet1rowcount, titlemap.get(key));
+                    destinationcell.load("values");
+                    copycell.load("values");
+                    await context.sync();
+                    destinationcell.values = copycell.values;
+
+                }
+                // for(let column = 0; column < sheet2columncount; column++) {
+                //     let copycell = sheet2.getCell(ced, column);
+                //     let destinationcell = sheet1.getCell(sheet1rowcount, titlemap.get(localtitlemap.get(column)));
+                //     destinationcell.load("values");
+                //     copycell.load("values");
+                //     await context.sync();
+                //     destinationcell.values = copycell.values;
+                // }
+                emailmap.set(email2, sheet1rowcount);
+                sheet1rowcount += 1;
+                await context.sync();
+            }
+        }
+
+        console.log("Emails were copied");
+
+
+        // sheet2 = sheet2.getNextOrNullObject();
+        // await context.sync();
+        // if (sheet2.isNullObject){
+        //     console.log("Did it breaK?");
+            break;
+        // }
+        
+    }
+  }).then((res) => {
+    this.finishsheet();
+  });
+} catch (error) {
+    if (error.debugInfo.code = "ItemNotFound") {
+      this.setState({EE2A: "Please Select a Column with Data!"});
+    }
+    console.error(error);
+  }
+
+
+
+
+
+
+
 }
+
+
 
   render() {
     const { title, isOfficeInitialized } = this.props;
@@ -296,7 +513,7 @@ csheetclick = () => {
       return (
         <Progress
           title={title}
-          logo={require("./../../../assets/SPM_Old-Logo_2017.png")}
+          logo={require("./../../../assets/EmailSheet.png")}
           message="Please sideload your addin to see app body."
         />
       );
@@ -321,7 +538,7 @@ csheetclick = () => {
           <div style={divstyle}>
           <p style={pstyle} className="ms-font-l"> This program will take two columns as input.
           It checks whether the emails are duplicates. If so, it deletes one of the emails.
-          If not, it makes a copy of the row infromation and adds a new row.
+          If not, it makes a copy of the row information and adds a new row.
           </p>
           <div>
           <p style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '0px', paddingBottom: '0px'}}>Email Column 1</p>
@@ -330,7 +547,7 @@ csheetclick = () => {
           </div>
           <p style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '0px', paddingBottom: '0px'}}>Email Column 2</p>
           <p>Please select the second column with your cursor, then select the box below.</p>
-          <input onClick={this.handleInput2} className={this.state.EE2A == "Please Select a Column with Data!" ? "Iteminputred" : "Iteminput"} value={this.state.EE2A}></input>
+          <input onClick={this.handleInput2} className={this.state.EE2A == "Please Select a Column with Data!" ? "Iteminputred" : "Iteminput"} style={inputstyle} value={this.state.EE2A}></input>
           <PrimaryButton style={{marginTop: '10px'}} onClick={this.combineemails}>
             Combine Emails
           </PrimaryButton>
@@ -357,7 +574,7 @@ csheetclick = () => {
           <div style={{paddingBottom: '10px'}}>
           <p style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '0px', paddingBottom: '0px'}}>Common Column</p>
           <p>Please select the name of the column which is common among all sheets.</p>
-          <input onClick={this.handlesheetInput} className="Iteminput" value={this.state.columntitle[0].value}></input>
+          <input onClick={this.handlesheetInput} style={inputstyle} value={this.state.columntitle[0].value}></input>
           </div>
           {this.state.columntitle[0].value != "Please Select a Column Name" ? 
           (<div>

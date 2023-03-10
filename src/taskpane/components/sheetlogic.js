@@ -1,6 +1,7 @@
+import { title } from "process";
 import * as React from "react";
 
-export async function collatesheets(osheetname, ocellcolumn, ocellrow) {
+export async function collatesheets(osheetname, ocellcolumn, ocellrow, myfunc) {
     try {
         Excel.run(async (context) => {
           /**
@@ -17,83 +18,144 @@ export async function collatesheets(osheetname, ocellcolumn, ocellrow) {
           sheet1trange.load("columnCount");
           await context.sync(); 
           let sheet1titles = sheet1trange.values[0];
-          let sheet1rowcount = sheet1trange.rowCount;
+          let sheet1maintitle = sheet1erange.values[0][0].toLowerCase().trim();
+          let sheet1rowcount = sheet1erange.rowCount;
+          let sheet1columncount = sheet1trange.columnCount;
+          let titlemap = new Map();
+          let emailmap = new Map();
           /* declare hash table */
-          for(let j =0; j < sheet1titles.length; j++){
-            let name1 = sheet1titles[i].lower().strip() /* Double check this */
+          let name1 = sheet1titles[0];
+          for(let i = 0; i < sheet1titles.length; i++){
+            name1 = sheet1titles[i].toLowerCase().trim();
             /* put the values in a hash table with the titles as the key and the
             column index as the value */
-        }
-        for (let x = 0; x < sheet1erange.values.length; x++){
-            let email1 = sheet1erange.values[x][0].lower().strip()
-            /* Put the values in a hash table with the titles as key and the row index as the value */
-        }
-          for (let i = 0; i < context.workbook.worksheets.length; i++){
-            const sheet2 = context.workbook.worksheets[i]
+            titlemap.set(name1, i);
+          }
+          console.log("first for loop + column count " + sheet1trange.columnCount);
+          let email1 = sheet1erange.values[0][0];
+          for(let krib = 1; krib < sheet1erange.values.length; krib++){
+                email1 = sheet1erange.values[krib][0];
+                emailmap.set(email1, krib);
+            }
+        console.log("second for loop + map " + email1);
+        const count = context.workbook.worksheets.getCount()
+        let sheet2 = context.workbook.worksheets.getFirst();
+        await context.sync();
+
+          for (let i = 0; i < count.value-1; i++){
+            sheet2.load("name");
+            await context.sync();
+            if(sheet2.name == osheetname){
+                sheet2 = sheet2.getNextOrNullObject();
+                sheet2.load("name");
+                await context.sync();
+            }
+            // Implement check for null value at the end of the function -> if it goes to the next sheet and it is null then end the function
+            console.log("Worksheet " + i);
             const sheet2trange = sheet2.getRange("1:10000").getUsedRange(false);
             sheet2trange.load("values");
+            sheet2trange.load("columnCount");
             await context.sync();
+            let sheet2columncount = sheet2trange.columnCount;
             let sheet2titles = sheet2trange.values[0];
             let emailColumn = 0;
             let newtitles = [];
+            let localtitlemap = new Map();
+            console.log("sheet 1 row count " + sheet1rowcount);
             
             for (let z = 0; z < sheet2titles.length; z++) {
-                let name2 = sheet2titles[z].lower().strip()
-                sheet1trange.load("columnCount")
+                let name2 = sheet2titles[z].toLowerCase().trim();
+                sheet1trange.load("columnCount");
                 await context.sync();
-                if (/* name is in hash table */){
-                    if(name2 == "email"){
-                        emailColumn = z;
+                localtitlemap.set(name2, z);
+                // localtitlemap.set(z, name2);
+                if (titlemap.has(name2)){
+                    if(name2 == sheet1maintitle){ // change this to the value that's being passed in.
+                        emailColumn = z; // recorded so you know which one to compare to when you need to copy the values over
                     }
-                    continue;
                 } else /* name not in hash table */ {
+                    titlemap.set(name2, sheet1columncount);
                     /* put name2 in the hash table with an index of sheet1trange.columnCount */
-                    let new_cell = sheet1.getCell(0, sheet1trange.columnCount+1);
+                    let new_cell = sheet1.getCell(0, sheet1columncount);
                     new_cell.load("values");
                     await context.sync();
-                    new_cell.values = [[name2]];
-                    newtitles.append(z); /* Check this syntax */
-                    continue;
+                    new_cell.values = [[sheet2titles[z]]];
+                    newtitles.push(name2); /* Check this syntax */
+                    sheet1columncount += 1;
                 }
             }
-                
-            
-            temprange = sheet1.getCell(0, emailColumn)
-            fullrange = temprange.getEntireColumn();
-            const sheet2erange = fullrange.getUsedRange(false);
+            console.log("Email column is " + emailColumn);
+            let temprange2 = sheet2.getCell(0, emailColumn);
+            let fullrange2 = temprange2.getEntireColumn();
+            const sheet2erange = fullrange2.getUsedRange(false);
             sheet2erange.load("values");
+            // let temprange3 = sheet2.getCell(10, 0);
+            // let temp4 = temprange3.getEntireRow();
+            // temp4.load("address");
+            // temp4.load("values");
             await context.sync(); 
-            
-            for(let i =0; i< sheet2erange.values.length; i++) {
-                if(/* new email is in hash table */){
-                    let newemailinfo = sheet2.row(rowindex);
-                    let oldemailinfo = sheet1.row(rowindex);
+            let testrow = sheet1.getRangeByIndexes(sheet1rowcount, 0, 1, (sheet1columncount));
+            testrow.load("values");
+            testrow.load("address");
+            await context.sync();
+            console.log("TEST ROW");
+            console.log(testrow.address);
+            console.log(testrow.values);
+
+            for(let ced = 1; ced < sheet2erange.values.length; ced++){
+                let email2 = sheet2erange.values[i][0].toLowerCase().trim();
+                if(emailmap.has(email2)){
+                    console.log("GOES INSIDE FIRST IF STATEMENT 107");
+                    let newemailinfo = sheet2.getRangeByIndexes(ced, 0, 1, (sheet2columncount));
+                    let num = emailmap.get(email2);
+                    let oldemailinfo = sheet1.getRangeByIndexes(num, 0, 1, (sheet1columncount));
                     oldemailinfo.load("values");
                     newemailinfo.load("values");
                     await context.sync();
-                    for(let x = 0; x < newtitles.length; x++){
-                        oldemailinfo.values[indexfromhash] = newemailinfo.values[newtitles[x]] /* Double check the syntax for this */
+                    console.log(oldemailinfo.values);
+                    console.log(newemailinfo.values);
+                    for(let xo = 0; xo < newtitles.length; xo++){
+                        oldemailinfo.values[0][titlemap.get(newtitles[xo])] = newemailinfo.values[0][localtitlemap.get(newtitles[xo])]; /* Double check the syntax for this */
                     }
-                } else /* if new email is not in the hash table*/ {
-                    sheet1rowcount += 1;
-                    /* Add the email to the hash table */
-                    let newInfo = sheet1.row(sheet1rowcount);
-                    let oldInfo = sheet2.row(currentrow);
-                    newInfo.load("values");
-                    oldInfo.load("values");
                     await context.sync();
-                    for (let x = 0; x < sheet2trange.values.length; x++){
-                        /* Search for each title's value in the hash,
-                        then the hash will return the correct column in sheet1
-                        then add all the values to the correct column */
-                        newInfo.values[0][hashreturn] = oldInfo.values[0][newtitles[x]]
+                } else {
+                    console.log("other implementation 2");
+                    for (let [key, value] of localtitlemap){
+                        let copycell = sheet2.getCell(ced, value);
+                        let destinationcell = sheet1.getCell(sheet1rowcount, titlemap.get(key));
+                        destinationcell.load("values");
+                        copycell.load("values");
+                        await context.sync();
+                        destinationcell.values = copycell.values;
+
                     }
+                    // for(let column = 0; column < sheet2columncount; column++) {
+                    //     let copycell = sheet2.getCell(ced, column);
+                    //     let destinationcell = sheet1.getCell(sheet1rowcount, titlemap.get(localtitlemap.get(column)));
+                    //     destinationcell.load("values");
+                    //     copycell.load("values");
+                    //     await context.sync();
+                    //     destinationcell.values = copycell.values;
+                    // }
+                    sheet1rowcount += 1;
+                    await context.sync();
 
                 }
-
             }
-            /* Repeat this process for all the sheets -> Should be finished! */1
+
+            console.log("Emails were copied");
+
+
+            sheet2 = sheet2.getNextOrNullObject();
+            await context.sync();
+            if (sheet2.isNullObject){
+                console.log("Did it breaK?");
+                break;
+            }
+            
         }
+      }).then((res) => {
+        myfunc();
       });
     } catch (error) {
         if (error.debugInfo.code = "ItemNotFound") {

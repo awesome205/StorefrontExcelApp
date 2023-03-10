@@ -6,8 +6,8 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Email and Sheet Automation"/>
   <Description DefaultValue="A template to get started."/>
-  <IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png"/>
-  <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-64.png"/>
+  <IconUrl DefaultValue="https://localhost:3000/assets/EmailSheet.png"/>
+  <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/EmailSheet.png"/>
   <SupportUrl DefaultValue="https://cascadeup.tech"/>
   <AppDomains>
     <AppDomain>https://cascadeup.tech</AppDomain>

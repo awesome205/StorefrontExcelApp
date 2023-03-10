@@ -1,0 +1,9 @@
+Notes from the Excel Documentation:
+
+To put runtime logging from the command line, this is how it works:
+
+- npx office-addin-dev-settings runtime-log --enable
+- npx office-addin-dev-settings runtime-log --enable [filename.txt]
+- defaults write com.microsoft.Excel CEFRuntimeLoggingFile -string "runtime_logs.txt"
+open ~/library/Containers/com.microsoft.Excel/Data/runtime_logs.txt
+- Need to go into the folder above to find the runtime logs

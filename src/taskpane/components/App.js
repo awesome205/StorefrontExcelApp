@@ -522,7 +522,7 @@ csheetclick = () => {
     return (
       <div className="ms-welcome">
         <Header
-          message="Welcome to the Email & Sheet Automation App"
+          message="Welcome to the Email & Sheet Automation Add-in"
         />
         {/* <HeroList message="Discover what Office Add-ins can do for you today!" items={this.state.listItems}> */}
         <div style={innercontent}>
